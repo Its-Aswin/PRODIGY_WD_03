@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Neon Tic-Tac-Toe</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: #0f0f0f;
+      color: #f1f1f1;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .container {
+      text-align: center;
+      padding: 20px;
+    }
+
+    h1 {
+      color: #0ff;
+      text-shadow: 0 0 10px #0ff, 0 0 20px #0ff;
+      margin-bottom: 20px;
+      font-size: 2.5rem;
+    }
+
+    .mode-select {
+      margin-bottom: 15px;
+    }
+
+    select {
+      background-color: #111;
+      color: #0ff;
+      padding: 8px;
+      border: 2px solid #0ff;
+      border-radius: 6px;
+      font-size: 1rem;
+      outline: none;
+    }
+
+    .board {
+      display: grid;
+      grid-template-columns: repeat(3, 90px);
+      grid-gap: 12px;
+      margin: 20px auto;
+      justify-content: center;
+    }
+
+    .cell {
+      width: 90px;
+      height: 90px;
+      background-color: #1a1a1a;
+      border: 2px solid #0ff;
+      border-radius: 10px;
+      font-size: 2rem;
+      color: #0ff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+      transition: background 0.3s, transform 0.2s;
+    }
+
+    .cell:hover {
+      background-color: #111;
+      transform: scale(1.05);
+      box-shadow: 0 0 8px #0ff, inset 0 0 4px #0ff;
+    }
+
+    .game-info {
+      margin-top: 15px;
+      font-size: 1.2rem;
+    }
+
+    .winner {
+      color: #00ff9f;
+      text-shadow: 0 0 5px #00ff9f;
+    }
+
+    .tie {
+      color: #f39c12;
+    }
+
+    button {
+      margin-top: 15px;
+      background: #0ff;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 6px;
+      color: #111;
+      font-weight: bold;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+
+    button:hover {
+      background-color: #00d1ff;
+    }
+
+    @media screen and (max-width: 400px) {
+      .board {
+        grid-template-columns: repeat(3, 70px);
+      }
+      .cell {
+        width: 70px;
+        height: 70px;
+        font-size: 1.6rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Neon Tic-Tac-Toe</h1>
+    <div class="mode-select">
+      <label for="mode">Mode: </label>
+      <select id="mode">
+        <option value="pvp">Player vs Player</option>
+        <option value="ai">Player vs AI</option>
+      </select>
+    </div>
+    <div class="board" id="board">
+      <div class="cell" data-cell></div>
+      <div class="cell" data-cell></div>
+      <div class="cell" data-cell></div>
+      <div class="cell" data-cell></div>
+      <div class="cell" data-cell></div>
+      <div class="cell" data-cell></div>
+      <div class="cell" data-cell></div>
+      <div class="cell" data-cell></div>
+      <div class="cell" data-cell></div>
+    </div>
+    <div class="game-info">
+      <div id="status">Player X's Turn</div>
+      <button id="restartBtn">Restart</button>
+    </div>
+  </div>
+
+  <script>
+    const cells = document.querySelectorAll('[data-cell]');
+    const statusText = document.getElementById('status');
+    const restartBtn = document.getElementById('restartBtn');
+    const modeSelect = document.getElementById('mode');
+
+    let board = Array(9).fill('');
+    let currentPlayer = 'X';
+    let isGameActive = true;
+    let isAI = false;
+
+    const winPatterns = [
+      [0,1,2], [3,4,5], [6,7,8],
+      [0,3,6], [1,4,7], [2,5,8],
+      [0,4,8], [2,4,6]
+    ];
+
+    const checkWinner = () => {
+      for (const [a, b, c] of winPatterns) {
+        if (board[a] && board[a] === board[b] && board[a] === board[c]) {
+          statusText.className = 'winner';
+          statusText.textContent = `🏆 Player ${currentPlayer} Wins!`;
+          isGameActive = false;
+          return;
+        }
+      }
+      if (!board.includes('')) {
+        statusText.className = 'tie';
+        statusText.textContent = 'It\'s a Tie!';
+        isGameActive = false;
+      }
+    };
+
+    const handleClick = (e) => {
+      const index = [...cells].indexOf(e.target);
+      if (!isGameActive || board[index]) return;
+
+      makeMove(index, currentPlayer);
+
+      if (isGameActive && isAI && currentPlayer === 'O') {
+        setTimeout(aiMove, 500);
+      }
+    };
+
+    const makeMove = (index, player) => {
+      board[index] = player;
+      cells[index].textContent = player;
+      checkWinner();
+      if (isGameActive) {
+        currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+        statusText.className = '';
+        statusText.textContent = `Player ${currentPlayer}'s Turn`;
+      }
+    };
+
+    const aiMove = () => {
+      const emptySpots = board.map((val, i) => val === '' ? i : null).filter(i => i !== null);
+      const move = emptySpots[Math.floor(Math.random() * emptySpots.length)];
+      makeMove(move, 'O');
+    };
+
+    const restartGame = () => {
+      board.fill('');
+      cells.forEach(cell => cell.textContent = '');
+      currentPlayer = 'X';
+      isGameActive = true;
+      statusText.className = '';
+      statusText.textContent = `Player ${currentPlayer}'s Turn`;
+    };
+
+    cells.forEach(cell => cell.addEventListener('click', handleClick));
+    restartBtn.addEventListener('click', restartGame);
+    modeSelect.addEventListener('change', () => {
+      isAI = modeSelect.value === 'ai';
+      restartGame();
+    });
+
+    isAI = modeSelect.value === 'ai';
+  </script>
+</body>
+</html>
